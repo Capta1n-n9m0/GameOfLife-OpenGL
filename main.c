@@ -1,22 +1,32 @@
 #define _XOPEN_SOURCE 600
 
+#include <GL/freeglut.h>
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdbool.h>
+
 
 #include "game_of_life.h"
 
 #define MY_WHITE glColor3f(1.0, 1.0, 1.0)
 
-char do_run = 1;
-long long start = 0;
+bool do_run = true;
+int WINDOW_W = 1000, WINDOW_H = 1000;
+int effective_w, effective_h;
 int square_size = 5;
-int width = 200, height = 200;
+int width = 1000, height = 1000;
 int count = 1;
 board b;
+board test_board;
+long long camera_x = 0, camera_y = 0;
 
+void RenderString(int x, int y, const char *string);
+void processSpecialKeys(int key, int x, int y);
+void run_test();
+bool if_nanoseconds_passed(long long n);
 long long get_nanoseconds();
 void game_logic();
 void render();
@@ -29,30 +39,92 @@ double fps_counter(int resolution_ms);
 void processNormalKeys(unsigned char key, int x, int y);
 
 int main (int argc, char * argv[]) {
+
+
+    effective_w = WINDOW_W;
+    effective_h = WINDOW_H - 100;
     srand(time(NULL));
     b = create_empty_board(width, height);
+    test_board = create_empty_board(5, 5);
+    fill_board_random(test_board);
     fill_board_random(b);
-    puts("good 29");
     glutInit(&argc, argv);
     //glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutInitDisplayMode(GLUT_RGBA);
-    glutInitWindowSize(1000, 1000);
+    glutInitWindowSize(WINDOW_W, WINDOW_H);
     glutCreateWindow("Game Of Life");
 
+    glutSpecialFunc(processSpecialKeys);
     glutKeyboardFunc(processNormalKeys);
     glutReshapeFunc(reshape);
     glutDisplayFunc(display);
-    puts("good 38");
     glutMainLoop();
 
     return 0;
 }
 
-void processNormalKeys(unsigned char key, int x, int y){
-    if(key == ' ')
-        do_run = !do_run;
+void RenderString(int x, int y, const char *string){
 
-    printf("Key pressed! %c\n", key);
+}
+
+void run_test(){
+    draw_board(test_board);
+
+    //usleep(20 * 1000);
+}
+
+bool if_nanoseconds_passed(long long n){
+    static long long start = 0;
+    if(start == 0)
+        start = get_nanoseconds();
+    if((get_nanoseconds() - start) >= n){
+        start = get_nanoseconds();
+        return true;
+    }
+    return false;
+}
+
+void processNormalKeys(unsigned char key, int x, int y){
+    switch (key) {
+        case 27: //ESC key
+            exit(0);
+            break;
+        case ' ':
+            do_run = !do_run;
+            break;
+        case 'a':
+            camera_x -= 5;
+            break;
+        case 'd':
+            camera_x += 5;
+            break;
+        case 's':
+            camera_y -= 5;
+            break;
+        case 'w':
+            camera_y += 5;
+            break;
+        case 'e':
+            square_size += 1;
+            break;
+        case 'q':
+            square_size -= 1;
+            break;
+        case 'r':
+            camera_x = 0;
+            camera_y = 0;
+            square_size = 5;
+            reshape(1000,1000);
+            break;
+    }
+}
+
+void processSpecialKeys(int key, int x, int y){
+    switch (key) {
+        case GLUT_KEY_F5:
+            fill_board_random(b);
+            break;
+    }
 }
 
 long long get_nanoseconds(){
@@ -64,6 +136,7 @@ long long get_nanoseconds(){
 }
 
 double fps_counter(int resolution_ms){
+    static long long start = 0;
     long long diff = 0;
     static double fps = 0;
     if(start == 0)
@@ -84,8 +157,10 @@ void game_logic(){
 }
 
 void render(){
+    //run_test();
     game_logic();
-    printf("FPS: %.2f\n",fps_counter(100));
+    if(if_nanoseconds_passed(500*1000*1000))
+        printf("FPS: %.2f\n",fps_counter(500));
 }
 void draw_board(board board1){
     for(int y = 1; y < board1.height; y++)
@@ -93,8 +168,15 @@ void draw_board(board board1){
             if (board1.cells[y][x]) draw_cell(x, y);
 }
 
+bool if_cell_fits_in_screen(int x, int y){
+    if((x * square_size + square_size - camera_x) > effective_w) return false;
+    if((y * square_size + square_size - camera_y) > effective_h) return false;
+    return true;
+}
+
 void draw_cell(int x, int y){
-    draw_square(x*square_size, y*square_size, square_size);
+    if(if_cell_fits_in_screen(x, y))
+        draw_square(x*square_size - camera_x, y*square_size - camera_y, square_size);
 }
 
 void draw_square(int x, int y, int size){
@@ -119,6 +201,9 @@ void display(){
 
 void reshape(int w, int h){
     glViewport(0, 0, w, h);
+    WINDOW_W = w; WINDOW_H = h;
+    effective_w = WINDOW_W;
+    effective_h = WINDOW_H - 100;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -126,6 +211,7 @@ void reshape(int w, int h){
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    glutPostRedisplay();
 }
 
 
