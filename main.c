@@ -14,6 +14,7 @@
 #define MY_WHITE glColor3f(1.0, 1.0, 1.0)
 
 bool do_run = true;
+double FPS_G = 0;
 int WINDOW_W = 1000, WINDOW_H = 1000;
 int effective_w, effective_h;
 int square_size = 5;
@@ -23,7 +24,9 @@ board b;
 board test_board;
 long long camera_x = 0, camera_y = 0;
 
-void RenderString(int x, int y, const char *string);
+void draw_line(int x, int y, int thickness);
+void info_area();
+void RenderString(int x, int y, const unsigned char *string);
 void processSpecialKeys(int key, int x, int y);
 void run_test();
 bool if_nanoseconds_passed(long long n);
@@ -63,8 +66,31 @@ int main (int argc, char * argv[]) {
     return 0;
 }
 
-void RenderString(int x, int y, const char *string){
+void write_fps(double fps){
+    unsigned char buff[64];
+    sprintf((char *)buff, "FPS: %.2f", fps);
+    RenderString(0, effective_h+10, buff);
+}
 
+void draw_line(int x, int y, int thickness){
+    glColor3f(0.4, 0.4, 0.4);
+    glBegin(GL_QUADS);
+    glVertex2i(x, y);
+    glVertex2i(WINDOW_W, y);
+    glVertex2i(WINDOW_W, y+thickness);
+    glVertex2i(x, y+thickness);
+    glEnd();
+}
+
+void RenderString(int x, int y, const unsigned char *string){
+    glColor3f(1,1,1);
+    glRasterPos2i(x, y);
+    glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, string);
+}
+
+void info_area(){
+    draw_line(0, effective_h, 5);
+    write_fps(FPS_G);
 }
 
 void run_test(){
@@ -150,6 +176,7 @@ double fps_counter(int resolution_ms){
 }
 
 void game_logic(){
+    info_area();
     draw_board(b);
 
     if(do_run)evolve_board(&b);
@@ -160,7 +187,7 @@ void render(){
     //run_test();
     game_logic();
     if(if_nanoseconds_passed(500*1000*1000))
-        printf("FPS: %.2f\n",fps_counter(500));
+        FPS_G = fps_counter(500);
 }
 void draw_board(board board1){
     for(int y = 1; y < board1.height; y++)
