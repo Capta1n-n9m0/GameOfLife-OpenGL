@@ -65,7 +65,7 @@ long long get_nanoseconds();
 void draw_string(int x, int y, const unsigned char *string);
 void draw_board(board board1);
 void draw_cell(int x, int y);
-void draw_bow(int x, int y, int x_side, int y_side, int thickness, Color3f color);
+void draw_box(int x, int y, int x_side, int y_side, int thickness, Color3f color);
 void draw_vertical_line(int x, int thickness, Color3f color);
 void draw_horizontal_line(int y, int thickness, Color3f color);
 void draw_white_square(int x, int y, int side);
@@ -112,8 +112,8 @@ void render(){
         FPS_G = fps_counter(500);
 }
 bool if_cell_fits_in_screen(int x, int y){
-    if((x * square_size + square_size - camera_x) > effective_w) return false;
-    if((y * square_size + square_size - camera_y) > effective_h) return false;
+    if(((x - camera_x) * square_size + square_size) > effective_w) return false;
+    if(((y - camera_y) * square_size + square_size) > effective_h) return false;
     return true;
 }
 bool if_cell_is_on_board(int x, int y){
@@ -178,16 +178,16 @@ void processNormalKeys(unsigned char key, int x, int y){
             do_run = !do_run;
             break;
         case 'a': // move camera left 5 squares
-            camera_x -= 5*square_size;
+            camera_x -= 5;
             break;
         case 'd': // move camera right 5 squares
-            camera_x += 5*square_size;
+            camera_x += 5;
             break;
         case 's': // move camera down 5 squares
-            camera_y -= 5*square_size;
+            camera_y -= 5;
             break;
         case 'w': // move camera up 5 squares
-            camera_y += 5*square_size;
+            camera_y += 5;
             break;
         case 'e': // make side of a cell 1 pixel bigger
             square_size += 1;
@@ -227,13 +227,13 @@ void processMouseMove(int x, int y){
 void color_cells_with_mouse(){
     int grid_x, grid_y;
     if(mlb_down){
-        grid_x = (mouse_x + camera_x) / square_size;
-        grid_y = (mouse_y + camera_y) / square_size;
+        grid_x = mouse_x / square_size + camera_x;
+        grid_y = mouse_y / square_size + camera_y;
         if(if_cell_is_on_board(grid_x, grid_y))
             b.cells[grid_y][grid_x] = alive;
     } else if(mrb_down){
-        grid_x = (mouse_x + camera_x) / square_size;
-        grid_y = (mouse_y + camera_y) / square_size;
+        grid_x = mouse_x / square_size + camera_x;
+        grid_y = mouse_y / square_size + camera_y;
         if(if_cell_is_on_board(grid_x, grid_y))
             b.cells[grid_y][grid_x] = dead;
     }else{
@@ -279,16 +279,17 @@ void draw_string(int x, int y, const unsigned char *string){
     glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, string);
 }
 void draw_board(board board1){
-    draw_bow(0-camera_x, 0-camera_y, board1.width*square_size, board1.height*square_size, square_size, MY_COLOR_RED);
+    draw_box(0 - camera_x*square_size, 0 - camera_y*square_size, board1.width * square_size, board1.height * square_size, square_size,
+             MY_COLOR_RED);
     for(int y = 1; y < board1.height-1; y++)
         for(int x = 1; x < board1.width-1; x++)
             if (board1.cells[y][x]) draw_cell(x, y);
 }
 void draw_cell(int x, int y){
     if(if_cell_fits_in_screen(x, y))
-        draw_white_square(x*square_size - camera_x, y*square_size - camera_y, square_size);
+        draw_white_square((x-camera_x)*square_size, (y-camera_y)*square_size, square_size);
 }
-void draw_bow(int x, int y, int x_side, int y_side, int thickness, Color3f color){
+void draw_box(int x, int y, int x_side, int y_side, int thickness, Color3f color){
     draw_horizontal_line(y, thickness, color);
     draw_horizontal_line(y + y_side, thickness, color);
     draw_vertical_line(x, thickness, color);
