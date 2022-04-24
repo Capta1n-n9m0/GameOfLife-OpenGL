@@ -76,6 +76,12 @@ void evolve_board(board *b){
     copy_cells(*b, temp);
     free_board(temp);
 }
-
+void clear_board(board b){
+    for(int y = 0; y < b.height; y++){
+        for(int x = 0; x < b.width; x++){
+            b.cells[y][x] = dead;
+        }
+    }
+}
 
 

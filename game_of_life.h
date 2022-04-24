@@ -18,5 +18,6 @@ int count_alive_neighbours(board b, int x, int y);
 void set_perimeter_dead(board b);
 cell evolve_cell(board b, int x, int y);
 void evolve_board(board *b);
+void clear_board(board b);
 
 #endif //OPENGL1_GAME_OF_LIFE_H
