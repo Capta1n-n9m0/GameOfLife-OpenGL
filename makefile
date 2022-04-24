@@ -11,6 +11,8 @@ OBJECTS		=$(SOURCES:.c=.o)
 all: $(EXECUTABLE)
 	./$(EXECUTABLE) $(ARGS)
 
+build: $(EXECUTABLE)
+
 clean_run: $(EXECUTABLE)
 	./$(EXECUTABLE) $(ARGS)
 	rm $(OBJECTS)

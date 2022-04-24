@@ -225,7 +225,6 @@ void processMouseMove(int x, int y){
     mouse_y = WINDOW_H - y;
 }
 void color_cells_with_mouse(){
-    printf("left: %d, right: %d\n", mlb_down, mrb_down);
     int grid_x, grid_y;
     if(mlb_down){
         grid_x = (mouse_x + camera_x) / square_size;
